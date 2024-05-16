@@ -1,0 +1,108 @@
+const app = require('./app');
+require('./db');
+const {
+  PORT,
+  DISCORD_BOT_TOKEN,
+  DISCORD_CLIENT_ID,
+  GUILD_ID,
+} = require('./config');
+const {
+  Client,
+  GatewayIntentBits,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+} = require('discord.js');
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const rest = new REST({ version: '10' }).setToken(DISCORD_BOT_TOKEN);
+
+client.on('ready', () => console.log('Bot is logged in'));
+
+client.on('interactionCreate', (interaction) => {
+  if (interaction.isCommand()) {
+    switch (interaction.commandName) {
+      case 'setup': {
+        const channel = interaction.options.getChannel('channel');
+        channel.send({
+          embeds: [
+            {
+              description:
+                'Welcome to the server please authorize yourself by clickin on ✅ button',
+              color: '5763719',
+              title: `Welcome to ${interaction.guild?.name}`,
+            },
+          ],
+          components: [
+            {
+              type: 1,
+              components: [
+                {
+                  type: 2,
+                  url: 'http://localhost:3000',
+                  style: 5,
+                  emoji: {
+                    name: '✅',
+                  },
+                },
+              ],
+            },
+          ],
+        });
+        break;
+      }
+    }
+  } else if (interaction.isButton()) {
+    switch (interaction.customId) {
+      case 'verifyMember': {
+        console.log('Verifying Member...');
+        const role = interaction.guild?.roles.cache.get('1239637356584374274');
+        if (!role) {
+          console.log('Role does not exist');
+          return;
+        }
+        const member = interaction.member;
+        console.log(member.user);
+        member.roles.add(role).then(() =>
+          interaction
+            .reply({
+              content: `The ${role} was assigned to you`,
+              ephemeral: true,
+            })
+            .catch(() =>
+              interaction.reply({
+                content: 'Something went wrong',
+                ephemeral: true,
+              })
+            )
+        );
+        break;
+      }
+    }
+  }
+});
+
+(async () => {
+  try {
+    await rest.put(
+      Routes.applicationGuildCommands(DISCORD_CLIENT_ID, GUILD_ID),
+      {
+        body: [
+          new SlashCommandBuilder()
+            .setName('setup')
+            .setDescription('Setup the welcome channel bot')
+            .addChannelOption((option) => {
+              return option
+                .setName('channel')
+                .setDescription('The channel to send the message to');
+            }),
+        ],
+      }
+    );
+    await client.login(DISCORD_BOT_TOKEN);
+  } catch (err) {
+    console.log(err);
+  }
+})();
+
+app.listen(PORT);
+console.log('Server running on port', PORT);
