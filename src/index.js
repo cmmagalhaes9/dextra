@@ -38,7 +38,7 @@ client.on('interactionCreate', (interaction) => {
               components: [
                 {
                   type: 2,
-                  url: 'http://localhost:3000',
+                  url: 'https://dextra.onrender.com',
                   style: 5,
                   emoji: {
                     name: '✅',
