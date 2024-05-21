@@ -12,13 +12,16 @@ const {
   REST,
   Routes,
   SlashCommandBuilder,
+  StringSelectMenuBuilder,
 } = require('discord.js');
+const { parties, roles } = require('./utils/parties');
+
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const rest = new REST({ version: '10' }).setToken(DISCORD_BOT_TOKEN);
 
 client.on('ready', () => console.log('Bot is logged in'));
 
-client.on('interactionCreate', (interaction) => {
+client.on('interactionCreate', async (interaction) => {
   if (interaction.isCommand()) {
     switch (interaction.commandName) {
       case 'setup': {
@@ -50,6 +53,34 @@ client.on('interactionCreate', (interaction) => {
         });
         break;
       }
+      case 'dropdown': {
+        const channel = interaction.options.getChannel('channel');
+        const menu = new StringSelectMenuBuilder()
+          .setCustomId('select')
+          .setMinValues(0)
+          .setMaxValues(3)
+          .setPlaceholder('Partidos')
+          .addOptions(parties);
+
+        channel.send({
+          embeds: [
+            {
+              description:
+                'Seleciona até 3 partidos com que mais te identificas',
+              color: '15548997',
+              title: `Escolha de Partidos`,
+            },
+          ],
+          components: [
+            {
+              type: 1,
+              components: [menu],
+            },
+          ],
+        });
+
+        break;
+      }
     }
   } else if (interaction.isButton()) {
     switch (interaction.customId) {
@@ -78,6 +109,29 @@ client.on('interactionCreate', (interaction) => {
         break;
       }
     }
+  } else if (interaction.isStringSelectMenu()) {
+    if (interaction.customId === 'select') {
+      const member = interaction.member;
+
+      const roleIds = Object.values(roles);
+
+      await member.roles.remove(roleIds);
+
+      const selectedRoles = interaction.values;
+      const mentionedRoles = [];
+
+      for (const role of selectedRoles) {
+        await member.roles.add(roles[role]);
+        mentionedRoles.push(`<@&${roles[role]}>`);
+      }
+
+      await interaction.reply({
+        content: `Partidos atribuidos, tens agora acesso aos canais do(s) partido(s) ${mentionedRoles.join(
+          ', '
+        )}`,
+        ephemeral: true,
+      });
+    }
   }
 });
 
@@ -90,6 +144,15 @@ client.on('interactionCreate', (interaction) => {
           new SlashCommandBuilder()
             .setName('setup')
             .setDescription('Setup the welcome channel bot')
+            .addChannelOption((option) => {
+              return option
+                .setName('channel')
+                .setDescription('The channel to send the message to');
+            }),
+
+          new SlashCommandBuilder()
+            .setName('dropdown')
+            .setDescription('Setup the roles dropdown menu')
             .addChannelOption((option) => {
               return option
                 .setName('channel')
