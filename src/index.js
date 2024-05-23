@@ -42,7 +42,7 @@ client.on('interactionCreate', async (interaction) => {
               components: [
                 {
                   type: 2,
-                  url: 'https://dextra.onrender.com',
+                  url: APP_URL,
                   style: 5,
                   emoji: {
                     name: '✅',
