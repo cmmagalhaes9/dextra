@@ -11,4 +11,5 @@ module.exports = {
   ROLE_ID: process.env.ROLE_ID,
   GUILD_ID: process.env.GUILD_ID,
   GUILD_BACKUP: process.env.GUILD_BACKUP,
+  APP_URL: process.env.APP_URL,
 };

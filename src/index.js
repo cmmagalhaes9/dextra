@@ -5,6 +5,7 @@ const {
   DISCORD_BOT_TOKEN,
   DISCORD_CLIENT_ID,
   GUILD_ID,
+  APP_URL,
 } = require('./config');
 const {
   Client,
